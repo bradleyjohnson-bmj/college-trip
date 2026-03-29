@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="College Trip">
+<meta name="theme-color" content="#0b0f14">
+<meta name="mobile-web-app-capable" content="yes">
+<title>College Road Trip 2026</title>
+<!-- Preload fonts so they're ready on first paint -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  
+  html { 
+    height: 100%;
+    /* Prevent iOS rubber-band overscroll showing white */
+    background: #0b0f14;
+  }
+  
+  body { 
+    background: #0b0f14; 
+    overflow-x: hidden;
+    /* Smooth momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Prevent text size adjustment on orientation change */
+    -webkit-text-size-adjust: 100%;
+    /* Safe area padding for notched iPhones */
+    padding-top: env(safe-area-inset-top);
+    min-height: 100%;
+  }
+  
+  /* Hide scrollbar everywhere */
+  ::-webkit-scrollbar { width: 0; height: 0; }
+  
+  /* Prevent iOS callout on long press */
+  a, img { -webkit-touch-callout: none; }
+  
+  /* Form elements */
+  input, textarea, button, select { 
+    font-family: inherit; 
+    /* Prevent iOS zoom on input focus (needs 16px min) */
+    font-size: 16px;
+    /* Remove iOS default styling */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 0;
+  }
+  
+  /* Restore border-radius where we want it */
+  button { border-radius: 7px; }
+  textarea { border-radius: 7px !important; }
+  
+  /* Horizontal scroll containers — hide scrollbar on iOS */
+  .scroll-row { 
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scroll-row::-webkit-scrollbar { display: none; }
+  
+  /* Ensure tap targets are at least 44px (Apple HIG minimum) */
+  .tap-target { min-height: 44px; min-width: 44px; }
+  
+  /* Photo grid images — prevent drag on iOS */
+  img { -webkit-user-drag: none; user-select: none; }
+  
+  /* Fix for iOS keyboard pushing the fixed tab bar */
+  .tab-bar-ios {
+    padding-bottom: env(safe-area-inset-bottom, 8px);
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
+
+// === localStorage persistence helpers ===
+function loadState(key, fallback) {
+  try {
+    const saved = localStorage.getItem('crt_' + key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch(e) { return fallback; }
+}
+function saveState(key, value) {
+  try { localStorage.setItem('crt_' + key, JSON.stringify(value)); } catch(e) {}
+}
+function usePersistedState(key, fallback) {
+  const [state, setState] = useState(() => loadState(key, fallback));
+  useEffect(() => { saveState(key, state); }, [state]);
+  return [state, setState];
+}
+
+
+
+const SCHOOLS = [
+  {
+    id: "william-mary",
+    name: "William & Mary",
+    shortName: "W&M",
+    city: "Williamsburg, VA",
+    day: 1,
+    date: "Mon, Apr 6",
+    type: "Public",
+    founded: 1693,
+    enrollment: "7,063",
+    acceptance: "34%",
+    tuition: "$26,456 in / $52,154 out",
+    ratio: "13:1",
+    ranking: "#51 Nat'l Universities",
+    campus: "1,200 acres",
+    knownFor: "Business, Government, Liberal Arts",
+    mascot: "Griffin",
+    division: "D1 (CAA)",
+    tourTime: "10:00 AM guided tour",
+    tourType: "30-min info session + 75-min student-led tour",
+    tourLink: "https://admission.wm.edu/portal/info_sessions",
+    color: "#115740",
+    highlight: "Second-oldest college in America. Don't miss the Wren Building, Sunken Garden & Swem Library.",
+  },
+  {
+    id: "uva",
+    name: "University of Virginia",
+    shortName: "UVA",
+    city: "Charlottesville, VA",
+    day: 1,
+    date: "Mon, Apr 6",
+    type: "Public",
+    founded: 1819,
+    enrollment: "17,901",
+    acceptance: "17%",
+    tuition: "$23,897 in / $62,923 out",
+    ratio: "14:1",
+    ranking: "#26 Nat'l Universities",
+    campus: "1,682 acres",
+    knownFor: "Business, Engineering, Government, Pre-Med",
+    mascot: "Cavaliers",
+    division: "D1 (ACC)",
+    tourTime: "Self-guided (~2:30 PM)",
+    tourType: "Self-guided tour of the Grounds",
+    tourLink: "https://admission.virginia.edu/visit",
+    color: "#232D4B",
+    highlight: "Founded by Thomas Jefferson. Walk the Lawn, Rotunda & pavilions. 92% four-year grad rate.",
+  },
+  {
+    id: "elon",
+    name: "Elon University",
+    shortName: "Elon",
+    city: "Elon, NC",
+    day: 2,
+    date: "Tue, Apr 7",
+    type: "Private",
+    founded: 1889,
+    enrollment: "6,452",
+    acceptance: "66%",
+    tuition: "$48,723",
+    ratio: "11:1",
+    ranking: "#117 Nat'l Universities",
+    campus: "656 acres",
+    knownFor: "Communications, Business, Education",
+    mascot: "Phoenix",
+    division: "D1 (CAA)",
+    tourTime: "9:00 AM guided tour",
+    tourType: "Info session + student-led campus tour (~2 hrs)",
+    tourLink: "https://www.elon.edu/u/admissions/visit/",
+    color: "#73000a",
+    highlight: "#1 Best Undergraduate Teaching in the U.S. One of the most picturesque campuses in the Southeast.",
+  },
+  {
+    id: "unc",
+    name: "UNC Chapel Hill",
+    shortName: "UNC",
+    city: "Chapel Hill, NC",
+    day: 2,
+    date: "Tue, Apr 7",
+    type: "Public",
+    founded: 1789,
+    enrollment: "21,075",
+    acceptance: "15%",
+    tuition: "$9,096 in / $45,228 out",
+    ratio: "14:1",
+    ranking: "#22 Nat'l Universities",
+    campus: "729 acres",
+    knownFor: "Business, Biology, Computer Science, Journalism",
+    mascot: "Tar Heels",
+    division: "D1 (ACC)",
+    tourTime: "Self-guided (~1:00 PM)",
+    tourType: "Self-guided / Sense of Place tour",
+    tourLink: "https://admissions.unc.edu/visit/",
+    color: "#4B9CD3",
+    highlight: "Oldest public university in the U.S. The Old Well, Kenan Stadium, Franklin St for dinner.",
+  },
+  {
+    id: "wake-forest",
+    name: "Wake Forest University",
+    shortName: "Wake",
+    city: "Winston-Salem, NC",
+    day: 3,
+    date: "Wed, Apr 8",
+    type: "Private",
+    founded: 1834,
+    enrollment: "5,490",
+    acceptance: "22%",
+    tuition: "$70,332",
+    ratio: "10:1",
+    ranking: "#51 Nat'l Universities",
+    campus: "340 acres",
+    knownFor: "Business, Pre-Law, Communications",
+    mascot: "Demon Deacons",
+    division: "D1 (ACC)",
+    tourTime: "10:00 AM guided tour",
+    tourType: "Info session + student-led campus tour (~2 hrs)",
+    tourLink: "https://admissions.wfu.edu/visit/",
+    color: "#9E7E38",
+    highlight: "NC families <$200K attend tuition-free starting Fall 2026. #12 Best Undergrad Teaching.",
+  },
+  {
+    id: "clemson",
+    name: "Clemson University",
+    shortName: "Clemson",
+    city: "Clemson, SC",
+    day: 4,
+    date: "Thu, Apr 9",
+    type: "Public",
+    founded: 1889,
+    enrollment: "23,401",
+    acceptance: "38%",
+    tuition: "$15,554 in / $40,866 out",
+    ratio: "16:1",
+    ranking: "#75 Nat'l Universities",
+    campus: "17,000 acres",
+    knownFor: "Engineering, Business, Architecture, Sciences",
+    mascot: "Tigers",
+    division: "D1 (ACC)",
+    tourTime: "10:00 AM guided tour",
+    tourType: "30-min presentation + bus ride + 90-min walking tour",
+    tourLink: "https://admissions.clemson.edu/portal/campusvisit",
+    color: "#F56600",
+    highlight: "In-state tuition frozen 6 years running. 56% graduate debt-free. Lakeside campus, Death Valley.",
+  },
+];
+
+const ITINERARY = [
+  {
+    day: 1, date: "Monday, April 6", label: "Virginia Day",
+    schools: ["william-mary", "uva"],
+    segments: [
+      { from: "Weems, VA", to: "Williamsburg (W&M)", dist: "62 mi", time: "1 hr 20 min", depart: "8:30 AM" },
+      { from: "Williamsburg", to: "Charlottesville (UVA)", dist: "121 mi", time: "2 hrs", depart: "~12:00 PM" },
+      { from: "Charlottesville", to: "Elon, NC", dist: "180 mi", time: "3 hrs", depart: "~4:00 PM" },
+    ],
+    hotel: { name: "The Inn at Elon", status: "booked", dates: "Apr 6, 4pm – Apr 7, 11am", detail: "2 rooms booked" },
+    notes: "W&M 10 AM tour, then grab lunch on the road. UVA self-guided ~2:30 PM. Long evening drive to Elon.",
+  },
+  {
+    day: 2, date: "Tuesday, April 7", label: "NC Triangle Day",
+    schools: ["elon", "unc"],
+    segments: [
+      { from: "The Inn at Elon", to: "Elon University", dist: "—", time: "5 min", depart: "8:30 AM" },
+      { from: "Elon", to: "Burlington", dist: "5 mi", time: "10 min", depart: "~11:00 AM" },
+      { from: "Burlington", to: "Chapel Hill (UNC)", dist: "30 mi", time: "35 min", depart: "~12:30 PM" },
+    ],
+    extra: { label: "Burlington, NC", detail: "Show the kids where Dad grew up! ~1.5 hrs exploring.", icon: "🏠" },
+    hotel: { name: "AC Hotel Chapel Hill Downtown", status: "booked", dates: "Apr 7–8 (1 Night)", detail: "Conf #2R9YYL5WM0 (2 Queens) & #96O7GRDGD3 (1 King) — $254.72/room" },
+    notes: "Elon 9 AM tour, Burlington stop, UNC self-guided ~1 PM. Dinner on Franklin St.",
+  },
+  {
+    day: 3, date: "Wednesday, April 8", label: "Wake Forest + Drive South",
+    schools: ["wake-forest"],
+    segments: [
+      { from: "AC Hotel Chapel Hill", to: "Winston-Salem (Wake)", dist: "80 mi", time: "1 hr 20 min", depart: "8:30 AM" },
+      { from: "Winston-Salem", to: "Easley, SC", dist: "190 mi", time: "3 hrs", depart: "~12:30 PM" },
+    ],
+    hotel: { name: "Grandparents' house", status: "family", dates: "Easley, SC", detail: "Arrive ~4:00 PM. Evening with family!" },
+    notes: "Wake Forest 10 AM tour. Grab lunch in Winston-Salem, then drive to grandparents in Easley.",
+  },
+  {
+    day: 4, date: "Thursday, April 9", label: "Clemson Day",
+    schools: ["clemson"],
+    segments: [
+      { from: "Easley, SC", to: "Clemson University", dist: "10 mi", time: "15 min", depart: "9:30 AM" },
+    ],
+    hotel: null,
+    notes: "Easy 15-min drive from grandparents. Clemson 10 AM tour wraps up by noon. Trip complete!",
+    isFinal: true,
+  },
+];
+
+const RATING_QUESTIONS = [
+  { id: 1, q: "How did the campus feel? Could you see yourself living here?", label: "Campus Feel" },
+  { id: 2, q: "How was the surrounding town / area? Things to do?", label: "Location & Town" },
+  { id: 3, q: "How did the students seem? Friendly? Diverse? Your vibe?", label: "Student Vibe" },
+  { id: 4, q: "How were the academic facilities (classrooms, labs, library)?", label: "Academics" },
+  { id: 5, q: "How were the dorms and dining options?", label: "Dorms & Dining" },
+  { id: 6, q: "How was the tour guide / admissions presentation?", label: "Tour Quality" },
+  { id: 7, q: "How strong are the programs you're interested in?", label: "Program Fit" },
+  { id: 8, q: "How do the extracurriculars and clubs look?", label: "Activities" },
+  { id: 9, q: "How does the cost / financial aid picture look?", label: "Affordability" },
+  { id: 10, q: "Overall gut feeling — how excited are you about this school?", label: "Gut Feeling" },
+];
+
+const TABS = [
+  { id: "itinerary", label: "Trip", icon: "📅" },
+  { id: "schools", label: "Schools", icon: "🎓" },
+  { id: "map", label: "Route", icon: "🗺️" },
+  { id: "rate", label: "Rate", icon: "⭐" },
+  { id: "photos", label: "Photos", icon: "📸" },
+];
+
+function App() {
+  const [tab, setTab] = useState("itinerary");
+  const [selectedSchool, setSelectedSchool] = useState(null);
+  const [ratingSchool, setRatingSchool] = useState(SCHOOLS[0].id);
+  const [ratings, setRatings] = usePersistedState('ratings', {});
+  const [ratingNotes, setRatingNotes] = usePersistedState('notes', {});
+  const [photos, setPhotos] = useState({});
+  const [photoSchool, setPhotoSchool] = useState(SCHOOLS[0].id);
+  const fileRef = useRef(null);
+
+  const setRating = (sid, qid, val) => setRatings(p => ({ ...p, [sid]: { ...(p[sid] || {}), [qid]: val } }));
+  const setNote = (sid, txt) => setRatingNotes(p => ({ ...p, [sid]: txt }));
+  const getAvg = (sid) => { const r = ratings[sid]; if (!r) return null; const v = Object.values(r); return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(1) : null; };
+  const addPhoto = (sid, file) => { const r = new FileReader(); r.onload = e => setPhotos(p => ({ ...p, [sid]: [...(p[sid]||[]), { url: e.target.result, name: file.name }] })); r.readAsDataURL(file); };
+  const removePhoto = (sid, idx) => setPhotos(p => ({ ...p, [sid]: p[sid].filter((_,i) => i !== idx) }));
+
+  const S = {
+    root: { fontFamily: "'DM Sans', sans-serif", background: "#0b0f14", color: "#ddd8cf", minHeight: "100vh", maxWidth: 480, margin: "0 auto", position: "relative", paddingBottom: 'calc(76px + env(safe-area-inset-bottom, 0px))' },
+    card: (extra) => ({ background: "#12181f", borderRadius: 14, border: "1px solid #1c2530", marginBottom: 10, ...extra }),
+    muted: { color: "#5e6e80" },
+    heading: { fontFamily: "'Playfair Display', serif", color: "#f0ebe3" },
+  };
+
+  return (
+    <div style={S.root}>
+      {/* Header */}
+      <div style={{ background: "linear-gradient(160deg, #151e2a 0%, #0e1319 100%)", padding: "26px 18px 18px", borderBottom: "1px solid #1c2530" }}>
+        <div style={{ ...S.heading, fontSize: 24, fontWeight: 800, letterSpacing: -0.3 }}>College Road Trip</div>
+        <div style={{ fontSize: 12, color: "#6b7a8d", marginTop: 3, fontWeight: 500 }}>Apr 6–9, 2026 · Weems, VA → Clemson, SC · 6 schools · 4 days</div>
+        <div style={{ display: "flex", gap: 5, marginTop: 12, flexWrap: "wrap" }}>
+          {SCHOOLS.map(s => (
+            <span key={s.id} style={{ fontSize: 10, padding: "3px 9px", borderRadius: 20, fontWeight: 700, letterSpacing: 0.2, background: s.color+"28", color: s.color, border: `1px solid ${s.color}44` }}>{s.shortName}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div>
+        {tab === "itinerary" && <ItineraryView S={S} />}
+        {tab === "schools" && <SchoolsView S={S} selected={selectedSchool} setSelected={setSelectedSchool} />}
+        {tab === "map" && <MapView S={S} />}
+        {tab === "rate" && <RateView S={S} sid={ratingSchool} setSid={setRatingSchool} ratings={ratings} setRating={setRating} notes={ratingNotes} setNote={setNote} getAvg={getAvg} />}
+        {tab === "photos" && <PhotosView S={S} sid={photoSchool} setSid={setPhotoSchool} photos={photos} addPhoto={addPhoto} removePhoto={removePhoto} fileRef={fileRef} />}
+      </div>
+
+      {/* Tab Bar */}
+      <div className="tab-bar-ios" style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 480, background: "#0d1118", borderTop: "1px solid #1c2530", display: "flex", zIndex: 999 }}>
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => { setTab(t.id); window.scrollTo(0,0); }} className="tap-target" style={{ flex: 1, border: "none", background: "none", padding: "10px 0 10px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, color: tab === t.id ? "#6aafed" : "#3d4d5e", transition: "color .2s", minHeight: 50, borderRadius: 0 }}>
+            <span style={{ fontSize: 18 }}>{t.icon}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase" }}>{t.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   ITINERARY VIEW
+   ═══════════════════════════════════════════════ */
+function ItineraryView({ S }) {
+  const [open, setOpen] = useState(1);
+  return (
+    <div style={{ padding: "14px 14px 0" }}>
+      <div style={{ ...S.heading, fontSize: 17, marginBottom: 12 }}>Day-by-Day Plan</div>
+      {ITINERARY.map(day => {
+        const ex = open === day.day;
+        const ds = SCHOOLS.filter(s => day.schools.includes(s.id));
+        return (
+          <div key={day.day} style={S.card(ex ? { border: "1px solid #2a3848" } : {})}>
+            <button onClick={() => setOpen(ex ? null : day.day)} style={{ width: "100%", border: "none", background: "none", padding: "13px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 11, color: "#ddd8cf" }}>
+              <div style={{ width: 34, height: 34, borderRadius: 9, background: "linear-gradient(135deg,#1a2d45,#223a55)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: "#6aafed", flexShrink: 0 }}>{day.day}</div>
+              <div style={{ textAlign: "left", flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>{day.date}</div>
+                <div style={{ fontSize: 11, ...S.muted, marginTop: 1 }}>{day.label}</div>
+              </div>
+              <span style={{ color: "#3d4d5e", fontSize: 12, transform: ex ? "rotate(180deg)" : "", transition: "transform .2s" }}>▼</span>
+            </button>
+            {ex && (
+              <div style={{ padding: "0 14px 14px" }}>
+                {ds.map(s => (
+                  <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 11px", background: s.color+"12", borderRadius: 10, marginBottom: 7, border: `1px solid ${s.color}28` }}>
+                    <div style={{ width: 7, height: 7, borderRadius: 4, background: s.color, flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{s.name}</div>
+                      <div style={{ fontSize: 11, ...S.muted }}>{s.tourTime}</div>
+                    </div>
+                    <a href={s.tourLink} target="_blank" rel="noreferrer" style={{ fontSize: 9, padding: "4px 9px", borderRadius: 20, background: s.color+"28", color: s.color, border: `1px solid ${s.color}44`, textDecoration: "none", fontWeight: 700, whiteSpace: "nowrap" }}>Register</a>
+                  </div>
+                ))}
+                {day.extra && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 11px", background: "#1a1d12", borderRadius: 10, marginBottom: 7, border: "1px solid #3a3520" }}>
+                    <span style={{ fontSize: 16 }}>{day.extra.icon}</span>
+                    <div><div style={{ fontSize: 13, fontWeight: 600, color: "#d4c490" }}>{day.extra.label}</div><div style={{ fontSize: 11, color: "#8a8060" }}>{day.extra.detail}</div></div>
+                  </div>
+                )}
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "#3d4d5e", textTransform: "uppercase", letterSpacing: 1, marginBottom: 5 }}>Driving</div>
+                  {day.segments.map((seg, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: i < day.segments.length - 1 ? "1px solid #161d26" : "none", fontSize: 11, gap: 8 }}>
+                      <span style={{ color: "#8a96a3" }}>{seg.depart && <span style={{ ...S.muted }}>{seg.depart} · </span>}{seg.from} → {seg.to}</span>
+                      <span style={{ color: "#3d4d5e", whiteSpace: "nowrap" }}>{seg.dist} · {seg.time}</span>
+                    </div>
+                  ))}
+                </div>
+                {day.hotel && (
+                  <div style={{ marginTop: 8, padding: "10px 11px", borderRadius: 10, background: day.hotel.status === "booked" ? "#121f12" : day.hotel.status === "family" ? "#18121f" : "#1f1a10", border: `1px solid ${day.hotel.status === "booked" ? "#1f3a1f" : day.hotel.status === "family" ? "#2a1f3a" : "#3a2a10"}` }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 3, color: day.hotel.status === "booked" ? "#5aaa5a" : day.hotel.status === "family" ? "#aa7acc" : "#c8a84a" }}>
+                      {day.hotel.status === "booked" ? "🏨 Booked" : day.hotel.status === "family" ? "🏠 Family" : "🏨 Needed"}
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "#ccc6bb" }}>{day.hotel.name}</div>
+                    <div style={{ fontSize: 11, color: "#607060" }}>{day.hotel.dates}</div>
+                    {day.hotel.detail && <div style={{ fontSize: 10, color: "#506050", marginTop: 2 }}>{day.hotel.detail}</div>}
+                  </div>
+                )}
+                <div style={{ marginTop: 8, fontSize: 11, ...S.muted, fontStyle: "italic", lineHeight: 1.5 }}>💡 {day.notes}</div>
+                {day.isFinal && <div style={{ marginTop: 10, textAlign: "center", fontSize: 20 }}>🎉</div>}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <div style={S.card({ padding: "14px" })}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#6aafed", marginBottom: 8 }}>Trip Summary</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 11 }}>
+          {[["Total Distance", "~678 mi"], ["Total Driving", "~11.5 hrs"], ["Schools Visited", "6 campuses"], ["Duration", "4 days (Mon–Thu)"]].map(([l,v]) => (
+            <div key={l}><span style={S.muted}>{l}: </span><span style={{ fontWeight: 600 }}>{v}</span></div>
+          ))}
+        </div>
+      </div>
+      <div style={S.card({ padding: "14px" })}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#c8a84a", marginBottom: 8 }}>📋 Registration Checklist</div>
+        {SCHOOLS.map(s => (
+          <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid #161d26", fontSize: 11 }}>
+            <span style={{ width: 14, height: 14, borderRadius: 4, border: "2px solid #2a3848", flexShrink: 0 }} />
+            <span style={{ flex: 1, color: "#8a96a3" }}><span style={{ fontWeight: 600, color: "#ccc6bb" }}>{s.shortName}</span> — {s.tourTime}</span>
+            <a href={s.tourLink} target="_blank" rel="noreferrer" style={{ fontSize: 9, color: "#6aafed", textDecoration: "none", fontWeight: 600 }}>Link →</a>
+          </div>
+        ))}
+        <div style={{ marginTop: 8, fontSize: 10, color: "#c8a84a", background: "#1f1a10", padding: "8px 10px", borderRadius: 8, border: "1px solid #3a2a10" }}>
+          ⚠️ Clemson tours open 6 weeks in advance on Mondays at 8 AM EST!
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   SCHOOLS VIEW
+   ═══════════════════════════════════════════════ */
+function SchoolsView({ S, selected, setSelected }) {
+  const school = SCHOOLS.find(s => s.id === selected);
+  if (school) return (
+    <div style={{ padding: 14 }}>
+      <button onClick={() => setSelected(null)} style={{ border: "none", background: "none", color: "#6aafed", fontSize: 12, cursor: "pointer", fontWeight: 600, padding: 0, marginBottom: 10 }}>← All Schools</button>
+      <div style={S.card()}>
+        <div style={{ background: `linear-gradient(135deg,${school.color}38,${school.color}10)`, padding: "22px 16px 16px", borderBottom: `2px solid ${school.color}55` }}>
+          <div style={{ ...S.heading, fontSize: 20 }}>{school.name}</div>
+          <div style={{ fontSize: 12, color: "#8a96a3", marginTop: 3 }}>{school.city} · Est. {school.founded}</div>
+          <div style={{ display: "flex", gap: 5, marginTop: 8 }}>
+            <span style={{ fontSize: 9, padding: "3px 9px", borderRadius: 20, fontWeight: 700, background: school.color+"28", color: school.color, border: `1px solid ${school.color}44` }}>{school.type}</span>
+            <span style={{ fontSize: 9, padding: "3px 9px", borderRadius: 20, fontWeight: 600, background: "#1a2a3a", color: "#6aafed" }}>{school.ranking}</span>
+          </div>
+        </div>
+        <div style={{ padding: "14px 16px" }}>
+          <div style={{ padding: "9px 11px", background: school.color+"0e", borderRadius: 9, border: `1px solid ${school.color}1a`, marginBottom: 12, fontSize: 11, lineHeight: 1.6, color: "#b8b2a8" }}>✨ {school.highlight}</div>
+          {[
+            ["Enrollment", school.enrollment + " undergrad"], ["Acceptance Rate", school.acceptance],
+            ["Tuition & Fees", school.tuition], ["Student:Faculty", school.ratio],
+            ["Campus", school.campus], ["Known For", school.knownFor],
+            ["Mascot", school.mascot], ["Athletics", school.division],
+            ["Visit", `Day ${school.day} — ${school.date}`], ["Tour", school.tourType],
+          ].map(([l,v], i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i<9 ? "1px solid #161d26" : "none", fontSize: 11, gap: 10 }}>
+              <span style={{ ...S.muted, fontWeight: 600, whiteSpace: "nowrap" }}>{l}</span>
+              <span style={{ color: "#ddd8cf", textAlign: "right" }}>{v}</span>
+            </div>
+          ))}
+          <a href={school.tourLink} target="_blank" rel="noreferrer" style={{ display: "block", textAlign: "center", padding: "11px", background: school.color, color: "#fff", borderRadius: 9, textDecoration: "none", fontWeight: 700, fontSize: 12, marginTop: 12 }}>Register for Tour →</a>
+        </div>
+      </div>
+    </div>
+  );
+  return (
+    <div style={{ padding: 14 }}>
+      <div style={{ ...S.heading, fontSize: 17, marginBottom: 12 }}>School Profiles</div>
+      {SCHOOLS.map(s => (
+        <button key={s.id} onClick={() => setSelected(s.id)} style={{ width: "100%", border: `1px solid ${s.color}25`, background: "#12181f", borderRadius: 13, padding: "13px 14px", marginBottom: 7, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, textAlign: "left" }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: `linear-gradient(135deg,${s.color}44,${s.color}18)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, color: s.color, flexShrink: 0 }}>D{s.day}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#ddd8cf" }}>{s.name}</div>
+            <div style={{ fontSize: 10, ...S.muted, marginTop: 2 }}>{s.city} · {s.type} · {s.acceptance} accept</div>
+          </div>
+          <span style={{ color: "#2a3848", fontSize: 15 }}>›</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   MAP VIEW
+   ═══════════════════════════════════════════════ */
+function MapView({ S }) {
+  const stops = [
+    { name: "Weems, VA", sub: "Monday morning departure", color: "#6aafed", isStart: true },
+    { name: "W&M", sub: "Williamsburg, VA", color: "#115740", day: 1, time: "10 AM tour" },
+    { name: "UVA", sub: "Charlottesville, VA", color: "#232D4B", day: 1, time: "Self-guided ~2:30 PM" },
+    { name: "Elon", sub: "Elon, NC", color: "#73000a", day: 2, time: "9 AM tour" },
+    { name: "Burlington", sub: "Dad's hometown!", color: "#c8a84a", isExtra: true },
+    { name: "UNC", sub: "Chapel Hill, NC", color: "#4B9CD3", day: 2, time: "Self-guided ~1 PM" },
+    { name: "Wake Forest", sub: "Winston-Salem, NC", color: "#9E7E38", day: 3, time: "10 AM tour" },
+    { name: "Easley, SC", sub: "Grandparents' house", color: "#aa7acc", isExtra: true },
+    { name: "Clemson", sub: "Clemson, SC", color: "#F56600", day: 4, time: "10 AM tour" },
+  ];
+  const legs = [
+    { dist: "62 mi", time: "1:20" },
+    { dist: "121 mi", time: "2:00" },
+    { dist: "180 mi", time: "3:00" },
+    { dist: "5 mi", time: "0:10" },
+    { dist: "30 mi", time: "0:35" },
+    { dist: "80 mi", time: "1:20" },
+    { dist: "190 mi", time: "3:00" },
+    { dist: "10 mi", time: "0:15" },
+  ];
+
+  return (
+    <div style={{ padding: 14 }}>
+      <div style={{ ...S.heading, fontSize: 17, marginBottom: 12 }}>Route Overview</div>
+      <div style={S.card({ padding: "18px 14px" })}>
+        {stops.map((s, i) => (
+          <div key={i} style={{ display: "flex", gap: 12 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 18 }}>
+              <div style={{ width: 12, height: 12, borderRadius: 6, background: s.color, border: `3px solid ${s.color}33`, flexShrink: 0, marginTop: 2 }} />
+              {i < stops.length - 1 && <div style={{ width: 2, flex: 1, background: `linear-gradient(${s.color}55,${stops[i+1]?.color||"#333"}55)`, minHeight: 34 }} />}
+            </div>
+            <div style={{ flex: 1, paddingBottom: i < stops.length - 1 ? 3 : 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#ddd8cf" }}>{s.name}</div>
+              <div style={{ fontSize: 10, ...S.muted }}>
+                {s.isStart ? s.sub : s.isExtra ? s.sub : `Day ${s.day} · ${s.time}`}
+              </div>
+              {i < legs.length && (
+                <div style={{ fontSize: 10, color: "#3d4d5e", marginTop: 4, marginBottom: 3, padding: "3px 9px", background: "#0b1018", borderRadius: 7, display: "inline-block" }}>
+                  🚗 {legs[i].dist} · {legs[i].time}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, marginTop: 4 }}>
+        {[["678", "Total Miles"], ["11.5h", "Driving"], ["6", "Schools"]].map(([v,l]) => (
+          <div key={l} style={S.card({ padding: "12px 8px", textAlign: "center", marginBottom: 0 })}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: "#6aafed", ...S.heading }}>{v}</div>
+            <div style={{ fontSize: 9, color: "#3d4d5e", fontWeight: 700, marginTop: 2, textTransform: "uppercase", letterSpacing: 0.5 }}>{l}</div>
+          </div>
+        ))}
+      </div>
+      <div style={S.card({ padding: "12px 14px", marginTop: 7 })}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#c8a84a", marginBottom: 6 }}>🍽️ Dining Tips</div>
+        {[["The Corner", "UVA, Charlottesville"], ["Franklin Street", "UNC, Chapel Hill"], ["Downtown W-S", "Wake Forest, Winston-Salem"]].map(([n,d],i) => (
+          <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 11, borderBottom: i<2 ? "1px solid #161d26" : "none" }}>
+            <span style={{ color: "#b8b2a8", fontWeight: 500 }}>{n}</span><span style={S.muted}>{d}</span>
+          </div>
+        ))}
+      </div>
+      <div style={S.card({ padding: "12px 14px", marginTop: 0 })}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "#6aafed", marginBottom: 6 }}>🎒 Packing Reminders</div>
+        {["Comfortable shoes (3–5 mi walking/day)", "Phone charger / portable battery", "Water bottles", "Notebook for questions & impressions", "Flowbird app (Clemson parking)"].map((t,i) => (
+          <div key={i} style={{ fontSize: 11, padding: "4px 0", color: "#8a96a3", borderBottom: i<4 ? "1px solid #161d26" : "none" }}>• {t}</div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   RATE VIEW
+   ═══════════════════════════════════════════════ */
+function RateView({ S, sid, setSid, ratings, setRating, notes, setNote, getAvg }) {
+  const s = SCHOOLS.find(x => x.id === sid);
+  const sr = ratings[sid] || {};
+  const ct = Object.keys(sr).length;
+
+  return (
+    <div style={{ padding: 14 }}>
+      <div style={{ ...S.heading, fontSize: 17, marginBottom: 3 }}>Rate Each School</div>
+      <div style={{ fontSize: 11, ...S.muted, marginBottom: 12 }}>Tap stars after each visit. Compare at the end!</div>
+      
+      <div className="scroll-row" style={{ display: "flex", gap: 5, overflowX: "auto", paddingBottom: 8, marginBottom: 8 }}>
+        {SCHOOLS.map(x => {
+          const a = sid === x.id; const av = getAvg(x.id);
+          return <button key={x.id} onClick={() => setSid(x.id)} style={{ flexShrink: 0, border: a ? `2px solid ${x.color}` : "1px solid #1c2530", background: a ? x.color+"1a" : "#12181f", borderRadius: 10, padding: "7px 11px", cursor: "pointer", textAlign: "center", minWidth: 56 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: a ? x.color : "#5e6e80" }}>{x.shortName}</div>
+            {av && <div style={{ fontSize: 9, color: "#3d4d5e", marginTop: 1 }}>{av} ★</div>}
+          </button>;
+        })}
+      </div>
+
+      <div style={S.card({ padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" })}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700 }}>{s.name}</div>
+          <div style={{ fontSize: 10, ...S.muted }}>{ct}/10 rated{getAvg(sid) ? ` · Avg: ${getAvg(sid)} ★` : ""}</div>
+        </div>
+        <div style={{ width: 36, height: 36, borderRadius: 18, background: `conic-gradient(${s.color} ${ct*36}deg,#1c2530 0deg)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 26, height: 26, borderRadius: 13, background: "#12181f", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, color: s.color }}>{ct}</div>
+        </div>
+      </div>
+
+      {RATING_QUESTIONS.map(q => (
+        <div key={q.id} style={S.card({ padding: "11px 12px", border: sr[q.id] ? `1px solid ${s.color}28` : "1px solid #1c2530" })}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "#8a96a3", marginBottom: 1 }}>{q.id}. {q.label}</div>
+          <div style={{ fontSize: 10, ...S.muted, marginBottom: 7 }}>{q.q}</div>
+          <div style={{ display: "flex", gap: 4 }}>
+            {[1,2,3,4,5].map(v => (
+              <button key={v} onClick={() => setRating(sid, q.id, v)} className="tap-target" style={{ width: 44, height: 44, borderRadius: 10, border: "none", cursor: "pointer", background: sr[q.id] >= v ? s.color : "#161d26", color: sr[q.id] >= v ? "#fff" : "#3d4d5e", fontSize: 18, fontWeight: 600, transition: "all .15s", display: "flex", alignItems: "center", justifyContent: "center" }}>★</button>
+            ))}
+            <span style={{ fontSize: 10, color: "#3d4d5e", alignSelf: "center", marginLeft: 4 }}>{sr[q.id] || "—"}/5</span>
+          </div>
+        </div>
+      ))}
+
+      <div style={S.card({ padding: "11px 12px" })}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: "#8a96a3", marginBottom: 5 }}>📝 Notes about {s.shortName}</div>
+        <textarea value={notes[sid]||""} onChange={e=>setNote(sid,e.target.value)} placeholder="Likes, dislikes, random thoughts..." style={{ width: "100%", minHeight: 80, background: "#0b1018", color: "#ddd8cf", border: "1px solid #1c2530", borderRadius: 7, padding: "10px", fontSize: 16, resize: "vertical", fontFamily: "'DM Sans',sans-serif", boxSizing: "border-box" }} />
+      </div>
+
+      {Object.keys(ratings).length > 1 && (
+        <div style={S.card({ padding: "12px 14px" })}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#6aafed", marginBottom: 8 }}>📊 Comparison</div>
+          {SCHOOLS.filter(x => getAvg(x.id)).sort((a,b) => parseFloat(getAvg(b.id)) - parseFloat(getAvg(a.id))).map((x,i) => {
+            const av = parseFloat(getAvg(x.id));
+            return <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color: i===0 ? "#c8a84a" : "#3d4d5e", width: 14, textAlign: "right" }}>{i+1}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#ddd8cf", width: 55 }}>{x.shortName}</span>
+              <div style={{ flex: 1, height: 7, background: "#0b1018", borderRadius: 4, overflow: "hidden" }}>
+                <div style={{ width: `${av*20}%`, height: "100%", background: x.color, borderRadius: 4, transition: "width .4s" }} />
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 800, color: x.color, width: 26, textAlign: "right" }}>{av}</span>
+            </div>;
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   PHOTOS VIEW
+   ═══════════════════════════════════════════════ */
+function PhotosView({ S, sid, setSid, photos, addPhoto, removePhoto, fileRef }) {
+  const s = SCHOOLS.find(x => x.id === sid);
+  const sp = photos[sid] || [];
+  const total = Object.values(photos).reduce((a,b)=>a+b.length,0);
+
+  return (
+    <div style={{ padding: 14 }}>
+      <div style={{ ...S.heading, fontSize: 17, marginBottom: 3 }}>Photo Collector</div>
+      <div style={{ fontSize: 11, ...S.muted, marginBottom: 12 }}>{total} photo{total!==1?"s":""} collected</div>
+      
+      <div className="scroll-row" style={{ display: "flex", gap: 5, overflowX: "auto", paddingBottom: 8, marginBottom: 8 }}>
+        {SCHOOLS.map(x => {
+          const c = (photos[x.id]||[]).length; const a = sid === x.id;
+          return <button key={x.id} onClick={() => setSid(x.id)} style={{ flexShrink: 0, border: a ? `2px solid ${x.color}` : "1px solid #1c2530", background: a ? x.color+"1a" : "#12181f", borderRadius: 10, padding: "7px 11px", cursor: "pointer", textAlign: "center", minWidth: 56 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: a ? x.color : "#5e6e80" }}>{x.shortName}</div>
+            {c>0 && <div style={{ fontSize: 9, color: "#3d4d5e", marginTop: 1 }}>{c} 📸</div>}
+          </button>;
+        })}
+      </div>
+
+      <input ref={fileRef} type="file" accept="image/*" capture="environment" multiple style={{ display: "none" }} onChange={e => { Array.from(e.target.files).forEach(f => addPhoto(sid, f)); e.target.value = ""; }} />
+      <button onClick={() => fileRef.current?.click()} style={{ width: "100%", padding: "14px", background: `linear-gradient(135deg,${s.color}18,${s.color}0a)`, border: `2px dashed ${s.color}44`, borderRadius: 12, cursor: "pointer", color: s.color, fontSize: 13, fontWeight: 600, marginBottom: 12 }}>
+        📸 Add Photos for {s.shortName}
+      </button>
+
+      {sp.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "36px 16px", color: "#2a3848" }}>
+          <div style={{ fontSize: 36, marginBottom: 6 }}>📷</div>
+          <div style={{ fontSize: 12 }}>No photos yet for {s.shortName}</div>
+          <div style={{ fontSize: 10, marginTop: 3, color: "#1c2530" }}>Tap above to add photos from your visit</div>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+          {sp.map((p,i) => (
+            <div key={i} style={{ position: "relative", borderRadius: 10, overflow: "hidden", aspectRatio: "1", background: "#161d26" }}>
+              <img src={p.url} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <button onClick={() => removePhoto(sid, i)} style={{ position: "absolute", top: 5, right: 5, width: 22, height: 22, borderRadius: 11, background: "rgba(0,0,0,.7)", border: "none", color: "#f66", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App));
+</script>
+</body>
+</html>
